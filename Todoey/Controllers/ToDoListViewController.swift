@@ -120,8 +120,18 @@ class ToDoListViewController: UITableViewController {
         
     }
     
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
-
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
+//        if searchBar.text!.count != 0 {
+//            let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+//        }
         
         do {
             itemArray = try context.fetch(request)
@@ -142,31 +152,31 @@ extension ToDoListViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
         fetchData()
-        
         DispatchQueue.main.async {
-            searchBar.resignFirstResponder()
+            self.searchBar.resignFirstResponder()
         }
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        
+
         fetchData()
-        
+
     }
     
     func fetchData() {
+        
         let request : NSFetchRequest<Item> = Item.fetchRequest()
         
-        if searchBar.text!.count != 0 {
-            request.predicate = NSPredicate(format: "parentCategory.name MATCHES %@ AND title CONTAINS[cd] %@", (selectedCategory?.name)!,searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+
+        
+        if searchBar.text!.count == 0 {
+            loadItems(with: request)
         } else {
-            request.predicate = NSPredicate(format: "parentCategory.name MATCHES %@", (selectedCategory?.name)!)
-                
+            loadItems(with: request, predicate: predicate)
         }
         
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-        loadItems(with: request)
-
     }
 
 }
