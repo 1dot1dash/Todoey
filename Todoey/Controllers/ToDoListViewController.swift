@@ -42,6 +42,7 @@ class ToDoListViewController: UITableViewController {
             //Ternary operator ==>
             // value = condition ? valueIfTrue : valueIfFalse
             cell.accessoryType = item.done ? .checkmark : .none
+            
         } else {
             cell.textLabel?.text = "No Items Added"
         }
@@ -92,6 +93,7 @@ class ToDoListViewController: UITableViewController {
                     try self.realm.write {
                         let newItem = Item()
                         newItem.title = textField.text!
+                        newItem.dateCreated = Date()
                         currentCategory.items.append(newItem)
                         self.realm.add(newItem)
                     }
@@ -123,7 +125,7 @@ class ToDoListViewController: UITableViewController {
     func loadItems() {
         
 
-        todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
+        todoItems = selectedCategory?.items.sorted(byKeyPath: "dateCreated", ascending: true)
     
         tableView.reloadData()
         
@@ -154,7 +156,7 @@ extension ToDoListViewController: UISearchBarDelegate {
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
 
         if searchBar.text!.count != 0 {
-            todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "title", ascending: true)
+            todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
         }
         tableView.reloadData()
         
