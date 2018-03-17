@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class ToDoListViewController: SwipeTableViewController {
 
@@ -30,22 +31,59 @@ class ToDoListViewController: SwipeTableViewController {
 
         searchBar.delegate = self
         
+        tableView.separatorStyle = .none
+     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+    
+        title = selectedCategory?.name
+        
+        
+        guard let colorHex = selectedCategory?.bgColor else {fatalError()}
+        updateNavBar(withHexCode: colorHex)
+
+        
     }
 
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        updateNavBar(withHexCode: "1D9BF6")
+    }
+    
+    //MARK: - Nac Bar Setup Methods
+    
+    func updateNavBar(withHexCode colorHexCode: String) {
+        guard let navBar = navigationController?.navigationBar else {fatalError("Navigation controller does not exist.")}
+        guard let navBarColor = HexColor(colorHexCode) else { fatalError() }
+        navBar.barTintColor = navBarColor
+        navBar.tintColor = ContrastColorOf(navBarColor, returnFlat: true)
+        navBar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor: ContrastColorOf(navBarColor, returnFlat: true)]
+        searchBar.barTintColor =  navBarColor
+
+
+    }
+    
+    
     //MARK - TableView Datasource Methods
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
+        // Percentage reduced to half so it wont reach too dark 1.0
+        let colorPercentage = CGFloat(indexPath.row) / (CGFloat((todoItems?.count)! * 2))
+        //print(colorPercentage)
+        
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
             //Ternary operator ==>
             // value = condition ? valueIfTrue : valueIfFalse
             cell.accessoryType = item.done ? .checkmark : .none
-            
+            cell.backgroundColor = HexColor((selectedCategory?.bgColor)!)?.darken(byPercentage: colorPercentage)
+            cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
         } else {
             cell.textLabel?.text = "No Items Added"
+            cell.backgroundColor = HexColor("2ecc71")
         }
         
         return cell
@@ -95,6 +133,11 @@ class ToDoListViewController: SwipeTableViewController {
                         let newItem = Item()
                         newItem.title = textField.text!
                         newItem.dateCreated = Date()
+                        newItem.bgColor = ComplementaryFlatColorOf(HexColor(currentCategory.bgColor)!).hexValue()
+                        //newItem.bgColor = UIColor(gradientStyle:UIGradientStyle.topToBottom , withFrame: self.view.bounds, andColors: [HexColor(currentCategory.bgColor)!, UIColor.blue]).hexValue()
+                        print(currentCategory.bgColor)
+                        print(self.view.bounds)
+                        print(newItem.bgColor)
                         currentCategory.items.append(newItem)
                         self.realm.add(newItem)
                     }
